@@ -1,0 +1,20 @@
+form {
+  position: absolute;
+  bottom: 0;
+  width: 100%;
+  background: grey;
+  padding: 20px;
+}
+
+input {
+  float: left;
+  width: 70%;
+  height: 30px;
+  border: none;
+}
+
+button {
+  float: left;
+  width: 20%;
+  height: 33px;
+}
