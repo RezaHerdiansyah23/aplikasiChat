@@ -21,19 +21,33 @@ io.on('connection', function (socket) {
             users[socket.id] = username;
             usernames.push(username);
             socket.emit('registerRespond', true);
+            io.emit('addOnlineUser', usernames);
         }
-        console.log(users);
-        console.log('----------------------------------------------------------------');
-        console.log(usernames);
+
     });
     //kalo ada messages baru
     socket.on('newMessage', function (msg) {
         io.emit('newMessage', msg);
         console.log('message: ' + msg);
     });
+
+
+    //kalo user mengetik baru
+    socket.on('newTyping', function (msg) {
+        io.emit('newTyping', msg);
+    });
+
+
+
     //kalo user disconnect
     socket.on('disconnect', function () {
         socket.broadcast.emit('newMessage', 'Someone disconnected');
+
+        var index = usernames.indexOf(users[socket.id]);
+        usernames.splice(index, 1);
+
+        delete users[socket.id];
+        io.emit('addOnlineUser', usernames);
     });
 });
 

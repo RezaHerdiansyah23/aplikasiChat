@@ -4,8 +4,8 @@
     <title>chat apllication</title>
     <style>
         form {
-  position: absolute;
-  bottom: 0;
+   position: absolute;
+  bottom: 0; 
   width: 100%;
   background: grey;
   padding: 20px;
@@ -13,7 +13,7 @@
 li {
     padding: 5px;
 }
-li:nth-child(even){
+#messages li:nth-child(even){
     background: #333;
     color: rgb(255, 250, 250);
 }
@@ -40,7 +40,14 @@ button {
 .hidden{
     display: none;
 }
-
+#rightBox {
+    float: left;
+    width: 70%;
+}
+#leftBox {
+    float: left;
+    width: 20%;
+}
     </style>
 </head>
 <body>
@@ -51,7 +58,13 @@ button {
     </div>
 
 <div id="chatroom" class="hidden">
+    <div id="leftBox">
     <ul id="messages"></ul>
+    </div>
+    <div id="rightBox">
+        <h2>daftar user yang online</h2>
+        <ul id="user_lists"></ul>
+    </div>
     <form>
         <input type="text" id="text_box" placeholder="chat kamu"><button>Send</button>
     </form>
@@ -65,10 +78,22 @@ button {
             username = $('#nama_user').val();
             socket.emit('newMessage', username + ' ' + $('#text_box').val());
             $('#text_box').val('');
+            isTyping = false;
             return false;
         });
+        // untuk menampilkan username
+        socket.on('addOnlineUser', function(usernames){
+            $('#user_lists').empty();
+
+            for(var i=0; i<usernames.length; i++){
+                $('#user_lists').append($('<li id="user_' + usernames[i] + '">').text(usernames[i]));
+            }
+        });
+
+
         socket.on('newMessage', function(msg){
             $('#messages').append($('<li>').text(msg +' ||pada:'+Date()));
+                $('.temporary').remove();
         });
         $('#submit_name').click(function(){
            if($('#nama_user') != ''){
@@ -86,7 +111,20 @@ button {
                 $('#chatroom').removeClass('hidden');
                 $('#hompage').addClass('hidden');
             }
-        })
+        });
+
+        // ada yang sedang mengetik
+        var isTyping = false;
+        $('#text_box').keyup(function(){
+            if(isTyping == false){
+                socket.emit('newTyping', username + 'Sedang mengetik....');
+            }
+            isTyping = true;
+        });
+
+        socket.on('newTyping', function(msg){
+            $('#messages').append($('<li class="temporary">').text(msg));
+        });
 
        
     </script>
