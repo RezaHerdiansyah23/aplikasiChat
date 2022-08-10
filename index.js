@@ -1,56 +1,32 @@
-var app = require('express')();
-var http = require('http').Server(app);
-var io = require('socket.io')(http);
+const port = 3000;
+const express = require('express');
+const app = express();
+const http = require('http');
+const server = http.createServer(app);
+const { Server } = require("socket.io");
+const io = new Server(server);
+const escapeHtml = (text) => {
+    return text
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+}
 
+const nl2br = (str, is_xhtml) => {
+    if (typeof str === 'undefined' || str === null)
+        return '';
 
-app.get('/', function (req, res) {
-    res.sendFile(__dirname + '/index.html');
-});
+    const breakTag = (is_xhtml || typeof is_xhtml === 'undefined') ? '<br />' : '<br>';
+    return (str + '').replace(/([^>\r\n]?)(\r\n|\n\r|\r|\n)/g, '$1' + breakTag + '$2');
+}
 
-var users = {};
-var usernames = [];
-
-io.on('connection', function (socket) {
-    //kalo ada yang connect, kita kasih tau ke client
-    socket.broadcast.emit('newMessage', 'Someone connected');
-    //ketika ada yang registet
-    socket.on('registerUser', function (username) {
-        if (usernames.indexOf(username) != -1) {
-            socket.emit('registerRespond', false);
-        } else {
-            users[socket.id] = username;
-            usernames.push(username);
-            socket.emit('registerRespond', true);
-            io.emit('addOnlineUser', usernames);
-        }
-
-    });
-    //kalo ada messages baru
-    socket.on('newMessage', function (msg) {
-        io.emit('newMessage', msg);
-        console.log('message: ' + msg);
-    });
-
-
-    //kalo user mengetik baru
-    socket.on('newTyping', function (msg) {
-        io.emit('newTyping', msg);
-    });
-
-
-
-    //kalo user disconnect
-    socket.on('disconnect', function () {
-        socket.broadcast.emit('newMessage', 'Someone disconnected');
-
-        var index = usernames.indexOf(users[socket.id]);
-        usernames.splice(index, 1);
-
-        delete users[socket.id];
-        io.emit('addOnlineUser', usernames);
+io.on('connection', (socket) => {
+    socket.on('chat message', (msg) => {
+        io.emit('chat message', { nama: escapeHtml(msg.nama), pesan: nl2br(escapeHtml(msg.pesan)), waktu: msg.waktu });
     });
 });
 
-http.listen(3000, function () {
-    console.log('listening on http://localhost:3000');
-});
+server.listen(3000, () => { console.log('> Server dijalankan di port %d', port) });
+app.use(express.static(__dirname + '/public'));
